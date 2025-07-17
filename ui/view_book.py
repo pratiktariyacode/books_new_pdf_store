@@ -1,7 +1,8 @@
 import customtkinter as ctk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 import sqlite3
 import os
+import shutil
 import webbrowser
 
 DB_PATH = "users.db"
@@ -41,16 +42,36 @@ def main():
     else:
         for book_id, title, pdf_path in books:
             def open_pdf(p=pdf_path):
-                if os.path.exists(p):
-                    webbrowser.open_new(p)
+                if os.path.isfile(p):
+                    try:
+                        webbrowser.open_new(os.path.abspath(p))
+                    except Exception as e:
+                        messagebox.showerror("Open Error", f"Could not open PDF:\n{e}")
                 else:
-                    messagebox.showerror("File Not Found", "The PDF file does not exist.")
+                    messagebox.showerror("File Not Found", f"The PDF file was not found:\n{p}")
+
+            def download_pdf(p=pdf_path):
+                if os.path.isfile(p):
+                    save_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
+                    if save_path:
+                        try:
+                            shutil.copy(p, save_path)
+                            messagebox.showinfo("Download Complete", f"File saved to:\n{save_path}")
+                        except Exception as e:
+                            messagebox.showerror("Download Error", f"Could not save file:\n{e}")
+                else:
+                    messagebox.showerror("File Not Found", f"The PDF file was not found:\n{p}")
 
             row = ctk.CTkFrame(book_frame)
             row.pack(fill="x", pady=5, padx=10)
 
             ctk.CTkLabel(row, text=title, font=("Arial", 16), anchor="w").pack(side="left", padx=10, fill="x", expand=True)
-            ctk.CTkButton(row, text="Open PDF", command=open_pdf, width=100).pack(side="right", padx=10)
+            ctk.CTkButton(row, text="Open PDF", command=open_pdf, width=100).pack(side="right", padx=5)
+            ctk.CTkButton(row, text="Download", command=download_pdf, width=100).pack(side="right", padx=5)
 
     center_window(root, 700, 600)
     root.mainloop()
+
+
+if __name__ == '__man__':
+    main()
